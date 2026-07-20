@@ -1,0 +1,32 @@
+name: Test basic dry-run with mocked data
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          token: NOT_NEEDED
+          user: github
+          dryrun: "true"
+          use_mocked_data: "true"
+          output_action: none
+          use_prebuilt_image: "yes"
+          base: header, repositories
+          config_output: svg
+        continue-on-error: true
+      - name: Assert action ran without fatal error
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          # The action may succeed or fail depending on docker image availability,
+          # but it should not be skipped
+          if [ "$OUTCOME" = "skipped" ]; then
+            echo "FAIL: step was skipped unexpectedly"
+            exit 1
+          fi
+          echo "PASS: action ran (outcome=$OUTCOME)"

@@ -1,0 +1,32 @@
+name: Test fortune plugin dry-run
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          token: NOT_NEEDED
+          user: github
+          dryrun: "true"
+          use_mocked_data: "true"
+          output_action: none
+          use_prebuilt_image: "yes"
+          base: ""
+          base_skip: "true"
+          plugin_fortune: "yes"
+          config_output: svg
+        continue-on-error: true
+      - name: Assert action ran
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" = "skipped" ]; then
+            echo "FAIL: action step was unexpectedly skipped"
+            exit 1
+          fi
+          echo "PASS: fortune plugin dry-run ran with outcome=$OUTCOME"

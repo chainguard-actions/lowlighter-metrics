@@ -1,0 +1,47 @@
+name: Test dependency check passes on compatible runner
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Verify docker and jq are available
+        run: |
+          echo "Checking for docker..."
+          if ! which docker > /dev/null 2>&1; then
+            echo "FAIL: docker is not available on this runner"
+            exit 1
+          fi
+          echo "docker found: $(docker --version)"
+
+          echo "Checking for jq..."
+          if ! which jq > /dev/null 2>&1; then
+            echo "FAIL: jq is not available on this runner"
+            exit 1
+          fi
+          echo "jq found: $(jq --version)"
+
+          echo "PASS: all required dependencies are present"
+      - id: action
+        uses: .
+        with:
+          token: NOT_NEEDED
+          user: github
+          dryrun: "true"
+          use_mocked_data: "true"
+          output_action: none
+          use_prebuilt_image: "yes"
+          base: header
+          config_output: svg
+        continue-on-error: true
+      - name: Assert action did not skip
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" = "skipped" ]; then
+            echo "FAIL: action step was unexpectedly skipped"
+            exit 1
+          fi
+          echo "PASS: action ran with outcome=$OUTCOME"

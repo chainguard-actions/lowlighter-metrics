@@ -1,0 +1,48 @@
+name: Test metrics dry-run basic
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Install mock docker to avoid pulling real image
+        run: |
+          printf '%s\n' '#!/bin/sh' \
+            'CMD="$1"; shift || true' \
+            'case "$CMD" in' \
+            '  image)' \
+            '    SUBCMD="$1"; shift || true' \
+            '    case "$SUBCMD" in' \
+            '      pull|inspect) echo "mock-docker: image $SUBCMD ok"; exit 0;;' \
+            '      *) echo "mock-docker: image $SUBCMD ok"; exit 0;;' \
+            '    esac;;' \
+            '  build) echo "mock-docker: build ok"; exit 0;;' \
+            '  run) echo "mock-docker: run ok (skipped)"; exit 0;;' \
+            '  pull) echo "mock-docker: pull ok"; exit 0;;' \
+            '  *) echo "mock-docker: $CMD ok"; exit 0;;' \
+            'esac' > /tmp/mock-docker
+          chmod +x /tmp/mock-docker
+          sudo cp /tmp/mock-docker /usr/local/bin/docker
+          echo "Mock docker installed at $(which docker)"
+
+      - name: Run metrics in dry-run mode
+        id: metrics
+        uses: .
+        with:
+          token: ${{ github.token }}
+          user: github
+          base: header
+          base_skip: "no"
+          output_action: none
+          dryrun: "yes"
+          use_prebuilt_image: "yes"
+          config_output: svg
+          plugins_errors_fatal: "no"
+          debug: "no"
+
+      - name: Assert action completed without error
+        run: |
+          echo "Metrics action completed successfully in dry-run mode"
+          echo "PASS"

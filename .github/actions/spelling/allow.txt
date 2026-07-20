@@ -1,0 +1,15 @@
+deno
+gpgarmor
+github
+https
+leetcode
+pgn
+scm
+shas
+splatoon
+Splatnet
+ssh
+statink
+STATINK
+ubuntu
+yargsparser
