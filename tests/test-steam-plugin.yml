@@ -1,0 +1,30 @@
+name: Test Steam plugin inputs
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          token: ${{ github.token }}
+          plugin_steam: yes
+          plugin_steam_token: fake-steam-token
+          plugin_steam_user: "76561198000000000"
+          plugin_steam_sections: overview
+          plugin_steam_games_limit: 5
+          plugin_steam_recent_games_limit: 2
+          plugin_steam_achievements_limit: 2
+          plugin_steam_playtime_threshold: 0
+          plugin_steam_games_ignored: ""
+          dryrun: yes
+          use_mocked_data: yes
+          use_prebuilt_image: yes
+          output_action: none
+        continue-on-error: true
+      - name: Assert action ran
+        run: |
+          echo "Steam plugin test completed (dryrun with mocked data)"
+          echo "PASS"

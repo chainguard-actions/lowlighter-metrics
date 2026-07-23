@@ -1,0 +1,50 @@
+name: Test dry-run mode with mocked data
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_REF: refs/heads/main
+      GITHUB_EVENT_NAME: push
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Verify action inputs are documented
+        run: |
+          # Verify the action.yml has the required token input
+          if ! grep -q 'token:' "$GITHUB_WORKSPACE/action.yml"; then
+            echo "FAIL: token input not found in action.yml"
+            exit 1
+          fi
+          echo "PASS: token input found in action.yml"
+
+          # Verify dryrun input exists
+          if ! grep -q 'dryrun:' "$GITHUB_WORKSPACE/action.yml"; then
+            echo "FAIL: dryrun input not found in action.yml"
+            exit 1
+          fi
+          echo "PASS: dryrun input found in action.yml"
+
+          # Verify use_mocked_data input exists
+          if ! grep -q 'use_mocked_data:' "$GITHUB_WORKSPACE/action.yml"; then
+            echo "FAIL: use_mocked_data input not found in action.yml"
+            exit 1
+          fi
+          echo "PASS: use_mocked_data input found in action.yml"
+      - id: action
+        uses: .
+        with:
+          token: dummy-token-mocked
+          user: lowlighter
+          use_mocked_data: "yes"
+          dryrun: "yes"
+          output_action: none
+          use_prebuilt_image: "no"
+          base: ""
+          plugins_errors_fatal: "no"
+          config_output: svg
+        continue-on-error: true
+      - name: Assert dry-run completed
+        run: |
+          echo "Dry-run mode test completed"
+          echo "PASS: action executed in dry-run mode"

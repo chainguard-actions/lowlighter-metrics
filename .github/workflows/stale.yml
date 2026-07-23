@@ -1,0 +1,58 @@
+name: Stale issues, pr and runs
+
+on:
+  schedule:
+    - cron: "30 1 * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  stale:
+    name: Flag stale issues and pull requests
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: actions/stale@5ebf00ea0e4c1561e9b43a292ed34424fb1d4578 # v6
+        with:
+          days-before-stale: -1
+          stale-pr-message: This pull request seems to be inactive and will be automatically closed in a few days if it remains without any activity.
+          days-before-pr-stale: 21
+          days-before-pr-close: 3
+          stale-pr-label: ⏹️ stale
+          remove-stale-when-updated: yes
+          exempt-issue-labels: 📦 dependencies
+  lock:
+    name: Lock inactive closed issues and pull requests
+    needs:
+      - stale
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: dessant/lock-threads@be8aa5be94131386884a6da4189effda9b14aa21 # v4
+        with:
+          github-token: ${{ github.token }}
+          issue-inactive-days: 14
+          issue-lock-reason: ""
+          add-issue-labels: ☑️ archived
+          pr-inactive-days: 14
+          pr-lock-reason: ""
+          add-pr-labels: ☑️ archived
+  workflows:
+    name: Remove expired workflow runs
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3
+      - name: Run script
+        run: ./delete_workflows.sh lowlighter/metrics
+        working-directory: .github/actions/ghcr-clean
+        env:
+          GITHUB_TOKEN: ${{ github.token }}

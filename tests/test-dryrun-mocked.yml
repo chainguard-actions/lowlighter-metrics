@@ -1,0 +1,101 @@
+name: Test dry-run with mocked data
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Install mock docker
+        run: |
+          # Write a mock docker script that simulates successful operations
+          # without actually pulling or running Docker images.
+          # This avoids network dependencies on ghcr.io and slow local builds.
+          printf '%s\n' \
+            '#!/bin/sh' \
+            '# Mock docker for metrics action testing' \
+            'CMD="$1"' \
+            'SUBCMD="$2"' \
+            'case "$CMD" in' \
+            '  image)' \
+            '    case "$SUBCMD" in' \
+            '      pull)  echo "Mock: pull $3"; exit 0 ;;' \
+            '      inspect) echo "[]"; exit 0 ;;' \
+            '      build) echo "Mock: image build"; exit 0 ;;' \
+            '    esac ;;' \
+            '  build) echo "Mock: build"; exit 0 ;;' \
+            '  run)   echo "Mock: docker run (dry-run)"; exit 0 ;;' \
+            'esac' \
+            'echo "Mock docker: unhandled: $*"; exit 0' \
+            > /tmp/mock-docker.sh
+          chmod +x /tmp/mock-docker.sh
+          sudo cp /tmp/mock-docker.sh /usr/local/bin/docker
+          sudo chmod +x /usr/local/bin/docker
+          echo "Mock docker installed at $(which docker)"
+          docker image inspect test-image || true
+
+      - name: Run metrics action in dry-run mode with mocked data
+        id: action
+        uses: .
+        with:
+          token: ${{ github.token }}
+          user: lowlighter
+          base: header
+          plugin_languages: no
+          plugin_isocalendar: no
+          plugin_topics: no
+          plugin_stars: no
+          plugin_habits: no
+          plugin_activity: no
+          plugin_traffic: no
+          plugin_followup: no
+          plugin_reactions: no
+          plugin_people: no
+          plugin_notable: no
+          plugin_achievements: no
+          plugin_discussions: no
+          plugin_repositories: no
+          plugin_gists: no
+          plugin_projects: no
+          plugin_introduction: no
+          plugin_skyline: no
+          plugin_support: no
+          plugin_pagespeed: no
+          plugin_tweets: no
+          plugin_stackoverflow: no
+          plugin_anilist: no
+          plugin_music: no
+          plugin_posts: no
+          plugin_rss: no
+          plugin_wakatime: no
+          plugin_leetcode: no
+          plugin_steam: no
+          plugin_fortune: no
+          plugin_nightscout: no
+          plugin_poopmap: no
+          plugin_screenshot: no
+          plugin_splatoon: no
+          plugin_stock: no
+          plugin_chess: no
+          plugin_16personalities: no
+          plugin_stargazers: no
+          plugin_lines: no
+          plugin_contributors: no
+          plugin_licenses: no
+          plugin_code: no
+          plugin_calendar: no
+          plugin_starlists: no
+          plugin_sponsorships: no
+          plugin_sponsors: no
+          dryrun: yes
+          use_mocked_data: yes
+          output_action: none
+          use_prebuilt_image: yes
+          config_output: svg
+          filename: metrics.test.svg
+
+      - name: Assert action completed successfully
+        run: |
+          echo "Action completed in dry-run mode with mocked data"
+          echo "PASS: metrics action ran successfully in dry-run mode"

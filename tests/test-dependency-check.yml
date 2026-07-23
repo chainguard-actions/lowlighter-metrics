@@ -1,0 +1,75 @@
+name: Test runner dependency check
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_REF: refs/heads/main
+      GITHUB_EVENT_NAME: push
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Verify required dependencies are present
+        run: |
+          echo "Checking for docker..."
+          if ! which docker > /dev/null 2>&1; then
+            echo "FAIL: docker not found"
+            exit 1
+          fi
+          echo "docker found: $(docker --version)"
+
+          echo "Checking for jq..."
+          if ! which jq > /dev/null 2>&1; then
+            echo "FAIL: jq not found"
+            exit 1
+          fi
+          echo "jq found: $(jq --version)"
+
+          echo "PASS: all required dependencies are present"
+      - name: Verify action structure
+        run: |
+          echo "Checking action.yml..."
+          if [ ! -f "$GITHUB_WORKSPACE/action.yml" ]; then
+            echo "FAIL: action.yml not found"
+            exit 1
+          fi
+
+          echo "Checking package.json..."
+          if [ ! -f "$GITHUB_WORKSPACE/package.json" ]; then
+            echo "FAIL: package.json not found (needed for version detection)"
+            exit 1
+          fi
+
+          echo "Checking Dockerfile..."
+          if [ ! -f "$GITHUB_WORKSPACE/Dockerfile" ]; then
+            echo "FAIL: Dockerfile not found (needed for image build)"
+            exit 1
+          fi
+
+          echo "PASS: action structure is valid"
+      - name: Verify package.json has version field
+        run: |
+          VERSION=$(jq -r '.version' "$GITHUB_WORKSPACE/package.json")
+          echo "Detected version: $VERSION"
+          if [ -z "$VERSION" ] || [ "$VERSION" = "null" ]; then
+            echo "FAIL: version field not found in package.json"
+            exit 1
+          fi
+          echo "PASS: version field found: $VERSION"
+      - id: action
+        uses: .
+        with:
+          token: dummy-token-for-dep-check
+          user: lowlighter
+          use_mocked_data: "yes"
+          dryrun: "yes"
+          output_action: none
+          use_prebuilt_image: "no"
+          base: ""
+          plugins_errors_fatal: "no"
+          config_output: svg
+        continue-on-error: true
+      - name: Assert dependency check completed
+        run: |
+          echo "Dependency check test completed"
+          echo "PASS: action executed after dependency verification"

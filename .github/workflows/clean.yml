@@ -1,0 +1,25 @@
+name: Clean untagged docker images
+
+on:
+  release:
+    types:
+      - published
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  clean:
+    name: Clean untagged docker images
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3
+      - name: Run script
+        run: ./delete_ghcr_dangling_images.sh lowlighter metrics
+        working-directory: .github/actions/ghcr-clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GHCR_BOT_TOKEN }}
