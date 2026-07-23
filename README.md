@@ -9,6 +9,7 @@ Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at
 | Version | Tag | Upstream commit |
 |---------|-----|-----------------|
 | v3.30 | [`v3.30`](https://github.com/chainguard-actions/lowlighter-metrics/tree/v3.30) | [`f99da6c`](https://github.com/lowlighter/metrics/commit/f99da6c94154d2a35384b004b2cfbd7cc83830b9) |
+| v3.32 | [`v3.32`](https://github.com/chainguard-actions/lowlighter-metrics/tree/v3.32) | [`3dd0616`](https://github.com/lowlighter/metrics/commit/3dd06164327476b9730a815a70ad39cbf5032f7e) |
 
 ## Privacy
 
