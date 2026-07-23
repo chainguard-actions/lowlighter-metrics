@@ -1,0 +1,37 @@
+name: Test (presets)
+
+on:
+  pull_request:
+    branches: [ presets ]
+  workflow_call:
+    inputs:
+      ref:
+        type: string
+      repo:
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3
+        with:
+          fetch-depth: 0
+          ref: master
+      - name: Setup NodeJS
+        uses: actions/setup-node@3235b876344d2a9aa001b8d1453c930bba69e610 # v3
+        with:
+          node-version: 17
+      - name: Setup metrics
+        run: npm ci
+      - name: Run tests
+        run: npm run test-presets
+        env:
+          HEAD_REF: ${{ inputs.ref }}
+          REPO: ${{ inputs.repo }}

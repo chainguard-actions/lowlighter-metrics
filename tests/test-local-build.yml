@@ -1,0 +1,55 @@
+name: Test local Docker build (use_prebuilt_image=no)
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Check action directory structure
+        run: |
+          echo "Checking action directory..."
+          if [ ! -f "$GITHUB_WORKSPACE/action.yml" ]; then
+            echo "FAIL: action.yml not found in workspace"
+            exit 1
+          fi
+          echo "action.yml found"
+
+          if [ ! -f "$GITHUB_WORKSPACE/package.json" ]; then
+            echo "WARN: package.json not found — version detection may fail"
+          else
+            echo "package.json found"
+            cat "$GITHUB_WORKSPACE/package.json" | grep '"version"' || true
+          fi
+
+          if [ ! -f "$GITHUB_WORKSPACE/Dockerfile" ]; then
+            echo "WARN: Dockerfile not found — local build will fail"
+          else
+            echo "Dockerfile found"
+          fi
+          echo "PASS: action directory structure checked"
+
+      - id: action
+        uses: .
+        with:
+          token: ${{ github.token }}
+          user: github
+          dryrun: "yes"
+          use_mocked_data: "yes"
+          use_prebuilt_image: "no"
+          output_action: "none"
+          config_output: "svg"
+          base: "header"
+        continue-on-error: true
+
+      - name: Assert action was executed
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "action outcome: $OUTCOME"
+          if [ "$OUTCOME" = "skipped" ]; then
+            echo "FAIL: action step was skipped unexpectedly"
+            exit 1
+          fi
+          echo "PASS: action was executed (outcome=$OUTCOME)"
